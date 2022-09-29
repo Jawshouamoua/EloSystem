@@ -1,0 +1,15 @@
+{
+  "name": "frisbee-golf-elo-system",
+  "version": "0.0.1",
+  "description": "prototype for frisbee golf elo system",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "jstat": "^1.9.5",
+    "prompt-sync": "^4.2.0"
+  }
+}
