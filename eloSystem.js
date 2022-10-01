@@ -11,17 +11,17 @@ function calc_modifier_probabilityOfWinning_basedOnEloDifference(elo_PlayerA, el
     return 1/(1 + Math.pow(10, (elo_PlayerB - elo_PlayerA)/CONSTANT)) // see docs for what function looks like
 }
 
-function calc_EloChangeForPlayerA(elo_PlayerA, elo_PlayerB, outcome){
+function calc_EloChangeForPlayerA(elo_PlayerA, elo_PlayerB, K, outcome){
     if(outcome < 0 || outcome > 1){
         console.error("outcome value should be in range [0,1]")
         return
     }
-
-    const K = 30 // constant used to determine max amount of points player A can earn
+    
+    //const K = 30 // constant used to determine max amount of points player A can earn
     const expectedScore = calc_modifier_probabilityOfWinning_basedOnEloDifference(elo_PlayerA, elo_PlayerB)
 
     // outcome is in range [0,1] and expected score in range [0,1]
-    // 
+    
     const playerA_pointsEarned = K * (outcome - expectedScore)
     return playerA_pointsEarned 
 }
