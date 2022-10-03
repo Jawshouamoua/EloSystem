@@ -4,6 +4,7 @@ const os = require('os')
 const csv = require('fast-csv')
 const fs = require('fs')
 const { resolve } = require('path')
+const path = require('path')
 const { getRandomValues } = require('crypto')
 
 
@@ -109,9 +110,9 @@ async function consoleProgram(){
     // get count of how many csv files to read
  
     let fileList = await new Promise((resolve, reject)=>{
-        fs.readdir(__dirname + '\\csv_folder', (err, files)=>{
+        fs.readdir(path.resolve(__dirname + '/csv_folder'), (err, files)=>{
             let result = files.map((elem, index, array) =>{
-                if (isCSVFile(elem)){ return '.\\csv_folder\\' + elem}
+                if (isCSVFile(elem)){ return path.resolve('./csv_folder/' + elem)}
             })
             resolve(result)
         })
