@@ -3,10 +3,11 @@ const prompt = require('prompt-sync')()
 const os = require('os')
 const csv = require('fast-csv')
 const fs = require('fs')
-const { resolve } = require('path')
+const { resolve, parse } = require('path')
 const path = require('path')
 const { getRandomValues } = require('crypto')
 
+const GameClass = require('./classes/GameClass')
 
 function createCSVFileReadPromise(filePath){
     let promise = new Promise(function(resolve, reject){
@@ -22,9 +23,9 @@ function createCSVFileReadPromise(filePath){
 
 function player(name, rating, k, score){
     this.name = name
-    this.rating = rating
-    this.k = k
-    this.score = score
+    this.rating = parseFloat(rating)
+    this.k = parseFloat(k)
+    this.score = parseFloat(score)
 }
 
 // array of players
@@ -42,45 +43,30 @@ console.log("normal, value at 60th percentile: " + jStat.normal.inv(0.6, 500, 10
 */
 
 
-function generateRandomEloInRange(min, max){
-    let num = min + Math.random() * (max - min)
-    return  num.toFixed(2)
-}
-
-function generateListOfPlayers(numPlayers){
-    let listOfPlayers = Array.from(Array(numPlayers).keys())
-    for(let i=0; i<listOfPlayers.length; i++){
-        listOfPlayers[i] = generateRandomEloInRange(0, 1000)
-    }
-    return listOfPlayers
-}
 
 let count = 0
 
-function comparePlayerToAllPlayers(players){
+function comparePlayersToAllPlayers(players){
     // loop through all players
-    // use map to compare selected player to all players
 
+    let updatedPlayerList = []
     for(let i=0;i<players.length;i++){
         players.forEach((element, index, array)=>{
             if(index == i){
                 return
             } 
-            let outcome = 0.0
-            if(players[i].score > element.score){
-                outcome = 0
-            }
-            else if(players[i].score == element.score){
-                outcome = 0.5
-            } 
-            else if(players[i].score < element.score){
-                outcome = 1
-            }
+            let outcome = getPlayerAOutcome(players[i], element)
             pointsEarned = eloFunction(
-                parseFloat(players[i].rating), 
-                parseFloat(element.rating), 
-                parseFloat(players[i].kValue),
+                players[i].rating, 
+                element.rating, 
+                players[i].kValue,
                 outcome
+            )
+            updatedPlayerList.push(new player(
+                    players[i].name,
+                    players[i].rating,
+                    players[i].kValue
+                )
             )
             console.log(
                 players[i].name,
@@ -94,11 +80,9 @@ function comparePlayerToAllPlayers(players){
     }
     console.log(`Number of Comparisons: ${count}`)
     count = 0
+    return [updatedPlayerList, players]
 }
 
-function getPlayerInfoToCalculateElo(){
-    return { rating: this.rating, k: this.kValue, score: this.score }
-}
 
 function isCSVFile(file){
     const csvPattern = /(\.csv)$/g
@@ -106,10 +90,8 @@ function isCSVFile(file){
     return false
 }
 
-async function consoleProgram(){
-    // get count of how many csv files to read
- 
-    let fileList = await new Promise((resolve, reject)=>{
+function getCSVFilesFromDirectory(pathLocation){
+    return  new Promise((resolve, reject)=>{
         fs.readdir(path.resolve(__dirname + '/csv_folder'), (err, files)=>{
             let result = files.map((elem, index, array) =>{
                 if (isCSVFile(elem)){ return path.resolve('./csv_folder/' + elem)}
@@ -117,13 +99,30 @@ async function consoleProgram(){
             resolve(result)
         })
     })
+} 
 
+function changeStringNumberPropertiesToFloat(data){
+    data.rating = parseFloat(data.rating)
+    data.kValue = parseFloat(data.kValue)
+    data.score = parseFloat(data.score)
+    return data
+}
+
+async function getDataFromCSVFiles(CSVfiles){
     let data = []
-    for(let i=0;i<fileList.length;i++){
-        let a = await createCSVFileReadPromise(fileList[i])
-        data.push(a)
+    for(let i=0;i<CSVfiles.length;i++){
+        let rawData = await createCSVFileReadPromise(CSVfiles[i])
+        rawData.map(changeStringNumberPropertiesToFloat)
+        data.push(new GameClass(rawData))
     }
-    //console.log(data)
+    return data
+}
+
+async function consoleProgram(){
+    // get count of how many csv files to read
+    let fileList = await getCSVFilesFromDirectory(__dirname + '/csv_folder')
+
+    let data = await getDataFromCSVFiles(fileList)
     
     console.log("\n")
     console.log("Running simulation...............")
@@ -132,15 +131,36 @@ async function consoleProgram(){
     console.log("")
     setTimeout(()=>{}, 500)
 
+    let playerDataHistory = []
     fileList.forEach((elem, index, arr)=>{
         console.log("Running Elo Algorithm on file: " + elem)
-        comparePlayerToAllPlayers(players = data[index])
+        playerDataHistory.push(data[index])
+        let updatedPlayerList = comparePlayersToAllPlayers(players = data[index])
         console.log('\n')
     })
-    
-     
 }
 
+async function consoleProgram1(){
+    /* 
+        - go through file by file (game by game) and run elo algorithm for all
+        players in that game
+        - Keep global track of each player + their rating score + ranking + K value
+            - global tracker should have info for all players that are found
+            in csv files
+    
+    */
+
+    let fileList = await getCSVFilesFromDirectory(__dirname + '/csv_folder')
+    let listOfGameData = await getDataFromCSVFiles(fileList)
+    listOfGameData.forEach((elem, index, arr)=>{
+        let [r, r1] = elem.getResultForPlayerByName("carl") 
+        console.log(r, r1)
+    })
+
+    // for each player in game, calculate result for that player and then put in global player tracker
+
+    
+}
 /* 
 - randomly generate array of players with random elo, then compare each player to each player 
 to get elo lossed or gained
@@ -150,5 +170,6 @@ to get elo lossed or gained
     - 0 = assume all comparisons are losses 
 */
 
-consoleProgram()
+consoleProgram1()
+//consoleProgram()
 
