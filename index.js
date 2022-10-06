@@ -7,7 +7,8 @@ const { resolve, parse } = require('path')
 const path = require('path')
 const { getRandomValues } = require('crypto')
 
-const GameClass = require('./classes/GameClass')
+const [GameClass, eloModData] = require('./classes/GameClass')
+const PlayerClass = require('./classes/PlayerClass')
 
 function createCSVFileReadPromise(filePath){
     let promise = new Promise(function(resolve, reject){
@@ -41,8 +42,6 @@ console.log("normal, median: " + jStat.normal.median(500, 100))
 console.log("normal, value at 40th percentile: " + jStat.normal.inv(0.4, 500, 100))
 console.log("normal, value at 60th percentile: " + jStat.normal.inv(0.6, 500, 100))
 */
-
-
 
 let count = 0
 
@@ -118,6 +117,7 @@ async function getDataFromCSVFiles(CSVfiles){
     return data
 }
 
+/*
 async function consoleProgram(){
     // get count of how many csv files to read
     let fileList = await getCSVFilesFromDirectory(__dirname + '/csv_folder')
@@ -139,37 +139,75 @@ async function consoleProgram(){
         console.log('\n')
     })
 }
-
-async function consoleProgram1(){
-    /* 
-        - go through file by file (game by game) and run elo algorithm for all
-        players in that game
-        - Keep global track of each player + their rating score + ranking + K value
-            - global tracker should have info for all players that are found
-            in csv files
-    
-    */
-
-    let fileList = await getCSVFilesFromDirectory(__dirname + '/csv_folder')
-    let listOfGameData = await getDataFromCSVFiles(fileList)
-    listOfGameData.forEach((elem, index, arr)=>{
-        let [r, r1] = elem.getResultForPlayerByName("carl") 
-        console.log(r, r1)
-    })
-
-    // for each player in game, calculate result for that player and then put in global player tracker
-
-    
-}
-/* 
-- randomly generate array of players with random elo, then compare each player to each player 
-to get elo lossed or gained
-- outcome: 
-    - 1 = assume all comparisions are wins, 
-    - 0.5 = assume all comparisons are ties, 
-    - 0 = assume all comparisons are losses 
 */
 
+function merge_LocalPlayerDataWithGlobalPlayerData(localPlayerData, globalData){
+    if(!globalData){ return localPlayerData }
+    //merge by player name
+    localPlayerData.forEach((localElem)=>{
+        let globalElem = globalData.find((elem)=>{
+            //console.log(elem.name, localElem.name)
+            return elem.name == localElem.name 
+        })
+        if (globalElem){ 
+            globalElem.mergPlayerComparisonData(localElem)
+            return
+        }
+        else { globalData.push(localElem) }
+    })
+    return globalData
+}
+
+function getPlayerDataForAllPlayers(listOfGameData, globalPlayerList){
+    listOfGameData.forEach((gameData, index, arr)=>{
+        let localPlayersData = []
+        let playerNameList = gameData.getListOfPlayers()
+        playerNameList.forEach((elem)=>{
+            let playerData = gameData.getPlayerDataByName(elem)
+            let player = new PlayerClass(playerData.name, playerData.rating)
+            let [pts, compareData] = gameData.getResultForPlayerByName(elem)
+            player.setComparisonData(compareData)             
+            localPlayersData.push(player)
+        })
+        //console.log(localPlayersData)
+        merge_LocalPlayerDataWithGlobalPlayerData(localPlayersData, globalPlayerList)
+    })
+    return globalPlayerList
+}
+
+async function consoleProgram1(){
+    // GameClass handles the elo calculation for each player of a particular game
+    // PlayerClass gets the elo data from GameClass
+    let fileList = await getCSVFilesFromDirectory(__dirname + '/csv_folder')
+    let listOfGameData = await getDataFromCSVFiles(fileList)
+
+    let globalPlayerList = []
+    globalPlayerList = getPlayerDataForAllPlayers(listOfGameData, globalPlayerList)
+    // display global player list
+    globalPlayerList.forEach((elem, i, arr)=>{
+        elem.displayPlayerData()
+    })
+    // allow for user to inspect global player list
+    while(true){
+        console.log('\n')
+        console.log('Press enter to exit program')
+        let playerName = prompt("Type the name of the Player whose comparison history you would like to inspect: ")
+        if(playerName == ''){
+            console.log('Exiting Program') 
+            break 
+        }
+        let result = globalPlayerList.find((elem)=> playerName == elem.name)
+        if (!result){ 
+            console.log(`ERROR: could not find player with name '${playerName}'`)
+            continue 
+        }
+        console.log()
+        console.log("Comparison data ---------------------------------------------------------")
+        result.displayComparisonData()
+    }
+}
+
+//main
 consoleProgram1()
 //consoleProgram()
 

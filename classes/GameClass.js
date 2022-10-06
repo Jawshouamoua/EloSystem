@@ -76,4 +76,4 @@ function getPlayerAOutcome(targ_playerA, playerB){
     return outcome
 }
 
-module.exports = GameClass
+module.exports = [GameClass, eloModData]
