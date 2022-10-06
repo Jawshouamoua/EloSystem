@@ -9,8 +9,9 @@ function eloModData(name, rating, outcome, pointsEarned){
 
 class GameClass {
     gameData = []
-    constructor(gameData){
-        this.gameData = gameData 
+    constructor(gameData, gameName){
+        this.gameData = gameData
+        this.gameName = gameName  
     }
 
     getListOfPlayers(){
@@ -47,6 +48,7 @@ class GameClass {
                 )
             )
         })
+        comparisonData.gameName = this.gameName
         return [totalPointsEarned, comparisonData] 
     }
 

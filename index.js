@@ -107,12 +107,23 @@ function changeStringNumberPropertiesToFloat(data){
     return data
 }
 
+const pattern = /(\\|\/\/)([A-Za-z1-9\s-_])+\.csv/g
+const pattern1 = /([A-Za-z1-9\s])+.csv/g
+function getFileNameStringFromPath(path){
+    let res1 = path.match(pattern)
+    //console.log(res1)
+    let res2 = res1[0].match(pattern1)
+    if(res2.length > 1){ console.error("Regex pattern matching should return only 1 match") }
+    return res2[0]
+}
+
 async function getDataFromCSVFiles(CSVfiles){
     let data = []
     for(let i=0;i<CSVfiles.length;i++){
+        let fileName = getFileNameStringFromPath(CSVfiles[i])
         let rawData = await createCSVFileReadPromise(CSVfiles[i])
         rawData.map(changeStringNumberPropertiesToFloat)
-        data.push(new GameClass(rawData))
+        data.push(new GameClass(rawData, fileName))
     }
     return data
 }
@@ -169,7 +180,6 @@ function getPlayerDataForAllPlayers(listOfGameData, globalPlayerList){
             player.setComparisonData(compareData)             
             localPlayersData.push(player)
         })
-        //console.log(localPlayersData)
         merge_LocalPlayerDataWithGlobalPlayerData(localPlayersData, globalPlayerList)
     })
     return globalPlayerList

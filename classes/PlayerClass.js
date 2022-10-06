@@ -7,7 +7,7 @@ class PlayerClass {
     }
 
     setComparisonData(compData){
-        this.comparisonData = compData
+        this.comparisonData.push(compData)
     }
     getComparisonData(){
         return this.comparisonData
@@ -21,9 +21,15 @@ class PlayerClass {
 
         let totalPointsEarned = 0
         console.log(`ComparisonData for ${this.name}, starting Elo: ${this.rating}`)
+        //console.log(this.comparisonData)
         this.comparisonData.forEach((elem, index, arr)=>{
-            totalPointsEarned += elem.pointsEarned
-            console.log(`Opponent_Stats[Name:${elem.name}, Rating: ${elem.rating}],  Outcome: ${elem.outcome}, Points_Earned: ${elem.pointsEarned}`)
+            console.log()
+            console.log(`Comparison Data from Game: ${elem.gameName}`)
+            elem.forEach((objectInData, i, arr1)=>{
+                totalPointsEarned += objectInData.pointsEarned
+                console.log(`Opponent_Stats[Name:${objectInData.name}, Rating: ${objectInData.rating}],  Outcome: ${objectInData.outcome}, Points_Earned: ${objectInData.pointsEarned}`)
+            })
+            
         })
         let newRating = this.rating + totalPointsEarned
         let newRatingRounded = newRating.toFixed(2)
