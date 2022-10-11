@@ -26,4 +26,8 @@ function calc_EloChangeForPlayerA(elo_PlayerA, elo_PlayerB, K, outcome){
     return playerA_pointsEarned 
 }
 
-module.exports = calc_EloChangeForPlayerA
+function calc_KValue_Modifier_ForPlayerA(player, gameData){
+    return -2
+}
+
+module.exports = [calc_EloChangeForPlayerA, calc_KValue_Modifier_ForPlayerA]

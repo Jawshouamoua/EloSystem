@@ -1,4 +1,5 @@
-const eloFunction = require('../eloSystem')
+const { CsvParserStream } = require('fast-csv')
+const [eloFunction, kmodFunction] = require('../eloSystem')
 
 function eloModData(name, rating, outcome, pointsEarned){
     this.name = name
@@ -7,75 +8,108 @@ function eloModData(name, rating, outcome, pointsEarned){
     this.pointsEarned = pointsEarned
 }
 
+function dataInterface(rawGameData){
+    this.name = rawGameData.Name.toUpperCase()
+    this.score = parseFloat(rawGameData.Score)
+}
+
+
+function formatRawGameData(rawGameData, index, array){
+    array[index] = new dataInterface(rawGameData)
+}
+
 class GameClass {
     gameData = []
     constructor(gameData, gameName){
+        /*
+        // Why does this make this.gameData undefined?
+        this.gameData = gameData.forEach(formatRawGameData)
+        console.log(this.gameData)
+        */
         this.gameData = gameData
-        this.gameName = gameName  
+        this.gameData.forEach(formatRawGameData)
+        this.gameName = gameName
     }
 
-    getListOfPlayers(){
+    getListOfPlayerNames(){
         let listOfPlayers = []
-        this.gameData.forEach((elem, index, array)=>{
-            if(elem.name == undefined){ console.error("name property cannot be undefined") }
-            listOfPlayers.push(elem.name)
+        this.gameData.forEach((data, index, array)=>{
+            if(data.name == undefined){ console.error("name property cannot be undefined") }
+            listOfPlayers.push(data.name)
         })
         return listOfPlayers
     }
 
-    getResultForPlayerByName(playerName){
-        const player = this.getPlayerDataByName(playerName)
+    isPlayerInGame(player){
+        let result = this.gameData.find((data)=>{
+            return data.name == player.getPlayerName()
+        })
+        if(result){return true}
+        return false
+    }
+
+    getResultForPlayer(player, mapOfPlayers){ // where left off
         let comparisonData = []
         let totalPointsEarned = 0
 
-        this.gameData.forEach((element, index, array)=>{
-            if(element.name == player.name){
-                return
-            } 
-            let outcome = getPlayerAOutcome(player, element)
+        this.gameData.forEach((data, index, array)=>{
+            if(data.name == player.getPlayerName()){ return }
+            let playerB = mapOfPlayers.get(data.name)
+
+            let outcome = this.getPlayerAOutcome(player.getPlayerName(), playerB.getPlayerName())
             let pointsEarned = eloFunction(
-                player.rating, 
-                element.rating, 
-                player.kValue,
+                player.getPlayerRating(), 
+                playerB.getPlayerRating(), 
+                player.getPlayerKValue(),
                 outcome
             )
             totalPointsEarned += pointsEarned
             comparisonData.push(new eloModData(
-                element.name, 
-                element.rating,
+                playerB.getPlayerName(), 
+                playerB.getPlayerRating(),
                 outcome,
                 pointsEarned
                 )
             )
         })
         comparisonData.gameName = this.gameName
-        return [totalPointsEarned, comparisonData] 
+        comparisonData.kValueMod = kmodFunction(player, this.gameData) 
+        return [totalPointsEarned, comparisonData]
     }
 
     getGameData(){
         return this.gameData
     }
 
+    getGameName(){
+        return this.gameName
+    }
+
     getPlayerDataByName(playerName){
-        return this.gameData.find((element) => element.name == playerName)
+        return this.gameData.find((data) => data.name == playerName)
+    }
+
+    getPlayerAOutcome(targ_playerA_name, playerB_name){
+        const playerAScore = this.getPlayerDataByName(targ_playerA_name).score
+        const playerBScore = this.getPlayerDataByName(playerB_name).score
+
+        let outcome = 0.0
+        if(playerAScore > playerBScore){
+            outcome = 0
+        }
+        else if(playerAScore == playerBScore){
+            outcome = 0.5
+        } 
+        else if(playerAScore < playerBScore){
+            outcome = 1
+        }
+        else{
+            console.error("playerB param should be a player object with a 'score' property")
+        }
+        return outcome
     }
 }
 
-function getPlayerAOutcome(targ_playerA, playerB){
-    let outcome = 0.0
-    if(targ_playerA.score > playerB.score){
-        outcome = 0
-    }
-    else if(targ_playerA.score == playerB.score){
-        outcome = 0.5
-    } 
-    else if(targ_playerA.score < playerB.score){
-        outcome = 1
-    }
-    else{
-        console.error("playerB param should be a player object with a 'score' property")
-    }
-    return outcome
-}
+
 
 module.exports = [GameClass, eloModData]
