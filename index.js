@@ -44,7 +44,10 @@ async function consoleProgram1(){
         playerManager.generateComparisonDataForEachPlayer(gamesManagerClass)
 
         //console.log(playerManager.getPlayerList())
-        // ask user to specify a player to look up data 
+        // ask user to specify a player to look up data
+
+        console.log(playerManager.getListOfPlayerNames())
+
         while(true){
             console.log('\n')
             console.log('Press enter to exit program')
@@ -64,7 +67,7 @@ async function consoleProgram1(){
             }
             console.log()
             console.log("Comparison data ---------------------------------------------------------")
-            result.displayComparisonDataAndUpdatePlayerData()
+            result.displayComparisonData()
 
             if(multipleMatchWarning){
                 console.log()
@@ -78,14 +81,35 @@ async function consoleProgram1(){
     }
 }
 
+function getDateAndTimeFromCSVFile(filePath, data, onDoneFn, onErrorFn){
+    fs.createReadStream(filePath)
+    .pipe(csv.parse({ headers: true, maxRows: 1 }))
+    .on('error', error => {onErrorFn(error)})
+    .on('data', row => {
+        
+        data.push(row)
+    })
+    .on('end', () => onDoneFn(data))
+}
+
+function getDataFromCSVFile(filePath, data, onDoneFn, onErrorFn){
+    fs.createReadStream(filePath)
+    .pipe(csv.parse({ headers: true, skipLines: 2 }))
+    .on('error', error => {onErrorFn(error)})
+    .on('data', row => {
+        data.push(row)
+    })
+    .on('end', () => onDoneFn(data))
+}
+
 function createCSVFileReadPromise(filePath){
     let promise = new Promise(function(resolve, reject){
         const data = []
-        fs.createReadStream(filePath)
-            .pipe(csv.parse({ headers: true }))
-            .on('error', error => {reject(error)})
-            .on('data', row => data.push(row))
-            .on('end', () => resolve(data))
+        const fn = (dataInfo)=>{
+            getDataFromCSVFile(filePath, dataInfo, resolve, reject)
+        }
+
+        getDateAndTimeFromCSVFile(filePath, data, fn, reject)
     })
     return promise
 }

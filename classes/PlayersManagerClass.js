@@ -29,6 +29,10 @@ class PlayersManagerClass {
         this.playerMap.set(player.getPlayerName, player)
     }
 
+    getListOfPlayerNames(){
+        return this.playerMap.keys()
+    }
+
     getPlayerByName(playerName){
         let player = this.playerMap.get(playerName)
         if(!player){ console.error(`Player of ${playerName} could not be found`) }
@@ -37,12 +41,11 @@ class PlayersManagerClass {
 
     getPlayerByLastName(playerLastName){
         let keys = this.playerMap.keys()
-        console.log(keys)
         let result = ''
         let stringMatchCount = 0
         for(const nameKey of keys){
             let lastName = splitNameStringBySpace(nameKey)
-            if(  lastName[lastName.length - 1] == playerLastName.toUpperCase()){ 
+            if( lastName[lastName.length - 1] == playerLastName.toUpperCase() ){ 
                 if(stringMatchCount > 1){
                     continue
                 }
@@ -70,11 +73,18 @@ class PlayersManagerClass {
 
     generateComparisonDataForEachPlayer(gamesManager){
         gamesManager.getGamesList().forEach((game)=>{
+            console.log(game.getGameName(), game.getDateAndTimeOfGame().toString())
             let listOfPlayerNamesInThisGame = game.getListOfPlayerNames()
             listOfPlayerNamesInThisGame.forEach((playerName)=>{
                 let player = this.playerMap.get(playerName)
                 let [pointsEarned, comparisonData] = game.getResultForPlayer(player, this.playerMap)
                 player.mergPlayerComparisonData(comparisonData)
+            })
+
+            // update stats for all players in current game
+            listOfPlayerNamesInThisGame.forEach((playerName)=>{
+                let player = this.playerMap.get(playerName)
+                player.updatePlayerUsingComparisonsFromGame(game.getGameName())
             })
         })
     }

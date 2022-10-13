@@ -1,5 +1,10 @@
 const { CsvParserStream } = require('fast-csv')
 const [eloFunction, kmodFunction] = require('../eloSystem')
+const dayjs = require('dayjs')
+let customParseFormat = require('dayjs/plugin/customParseFormat')
+dayjs.extend(customParseFormat)
+
+const customDateFormat = 'MM/DD/YYYY H:mm:ss a'
 
 function eloModData(name, rating, outcome, pointsEarned){
     this.name = name
@@ -18,6 +23,20 @@ function formatRawGameData(rawGameData, index, array){
     array[index] = new dataInterface(rawGameData)
 }
 
+function checkDateAndTimeFormat(date, time){
+    let datePattern = /[0-9]{2}\/[0-9]{2}\/[0-9]{4}/g
+    let timePattern = /[0-9]{2}:[0-9]{2} (pm|am)/g
+    let dateMatches = date.match(datePattern)
+    let timeMatches = time.match(timePattern)
+
+    if(!dateMatches || !timeMatches){
+        console.error(`error in date and time format in csv file: 
+        Expected:"MM/DD/YYYY" found ${date}  
+        Expected "00:00 am/pm" found ${time}`)
+        process.exit(1)
+    }
+}
+
 class GameClass {
     gameData = []
     constructor(gameData, gameName){
@@ -26,9 +45,27 @@ class GameClass {
         this.gameData = gameData.forEach(formatRawGameData)
         console.log(this.gameData)
         */
-        this.gameData = gameData
-        this.gameData.forEach(formatRawGameData)
+
+       let cleanedGameData = []
+       let dateAndTime 
+        gameData.forEach((rawGameData, index, arr)=>{
+            if(rawGameData.Name) { 
+                cleanedGameData.push(new dataInterface(rawGameData)) 
+            }
+            else if(rawGameData.Time && rawGameData.Date){
+                checkDateAndTimeFormat(rawGameData.Date, rawGameData.Time)
+                let string = rawGameData.Date + ' ' + rawGameData.Time
+                dateAndTime = dayjs(string).format(customDateFormat)
+            }
+        })
+
+        this.gameData = cleanedGameData
         this.gameName = gameName
+        this.dateAndTime = dayjs(dateAndTime)
+    }
+
+    getDateAndTimeOfGame(){
+        return this.dateAndTime
     }
 
     getListOfPlayerNames(){
