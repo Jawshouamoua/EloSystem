@@ -2,16 +2,16 @@ import getPointsEarned from '../../elo-system';
 import { rd1, rd2, rd3 } from '../../static/ssc';
 
 const ROUNDS = [rd1, rd2, rd3];
-
 const runSimulator = (payload) => {
   const { numberOfRounds, numberOfPlayers, basePoints, kValue } = payload;
 
   if (numberOfRounds > ROUNDS.length) throw new Error('Not enough rounds to simulate data');
 
   let results = {};
-  ROUNDS.forEach(round => {
+  ROUNDS.slice(0, numberOfRounds).forEach(round => {
+    const _round = round.slice(0, numberOfPlayers);
     try {
-      const newResults = calculateRound(round, results, basePoints, kValue);
+      const newResults = calculateRound(_round, results, basePoints, kValue);
       results = newResults;
     } catch (error) {
       throw error;

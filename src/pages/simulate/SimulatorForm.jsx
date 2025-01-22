@@ -4,9 +4,9 @@ import FormInput from '../../components/form-elements/input';
 
 const defaultForm = {
   numberOfRounds: 3,
-  numberOfPlayers: 4,
+  numberOfPlayers: 17,
   basePoints: 1200,
-  kValue: 20,
+  kValue: 32,
 };
 
 const SimulatorForm = ({ submit }) => {

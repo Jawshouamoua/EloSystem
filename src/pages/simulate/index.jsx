@@ -16,7 +16,12 @@ const Simulator = () => {
       This is a simulator for ELO System.
       <SimulatorForm submit={handleSubmit} />
       {data && (
-        <Results data={data} />
+        <>
+          <h3>Ranking based on score</h3>
+          <Results data={data} />
+          <h3>Ranking based on rating</h3>
+          <Results data={data} sort={'rating'} />
+        </>
       )}
     </div>
   );
