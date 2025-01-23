@@ -25,7 +25,7 @@ const getPointsEarned = (p1, p2, k = 16) => {
   const expectedScore = calcExpectedScore(p1Rating, p2Rating);
 
   const pointsEarned = k * (outcome - expectedScore);
-  console.log(`${p1.name}(${p1Rating}) expected score against ${p2.name}(${p2Rating}) is ${expectedScore}, result is ${p1Score}v${p2Score} ${outcome}. ${p1.name} rating changes by ${pointsEarned}`);
+  // console.log(`${p1.name}(${p1Rating}) expected score against ${p2.name}(${p2Rating}) is ${expectedScore}, result is ${p1Score}v${p2Score} ${outcome}. ${p1.name} rating changes by ${pointsEarned}`);
   return pointsEarned;
 };
 
